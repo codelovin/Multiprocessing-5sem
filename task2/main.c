@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#undef T1_TESTING
+
 // Binary Search
 int bs(int x, int *arr, int low, int high) {
     assert(low <= high);
@@ -68,6 +70,7 @@ void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
     int midA2 = bs(A[midA1], A, leftA2, rightA2);
     int mid_insert = leftCP + (midA1 - leftA1) + (midA2 - leftA2);
     CP[mid_insert] = A[midA1];
+#ifndef T1_TESTING
     #pragma omp parallel
     {
       #pragma omp single nowait
@@ -82,6 +85,10 @@ void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
         }
       }
     }
+#else
+  merge_parallel(A, CP, leftA1, midA1 - 1, leftA2, midA2 - 1, leftCP, m);
+  merge_parallel(A, CP, midA1 + 1, rightA1, midA2, rightA2, mid_insert + 1, m);
+#endif
 }
 
 // Main sorting function
@@ -95,6 +102,7 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
     int *T = (int*)calloc(len, sizeof(int));
     int mid = (lA + hA) / 2;
     int t_mid = mid - lA + 1;
+#ifndef T1_TESTING
     #pragma omp parallel
     {
       #pragma omp single nowait
@@ -109,6 +117,10 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
         }
       }
     }
+#else
+    mergesort_parallel(A, T, lA, mid, 0, m);
+    mergesort_parallel(A, T, mid + 1, hA, t_mid, m);
+#endif
     merge_parallel(T, CP, 0, t_mid - 1, t_mid, len - 1, lCP, m);
     free(T);
 }
