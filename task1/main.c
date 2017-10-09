@@ -27,14 +27,15 @@ void argparse(int argc, char **argv, int *a, int *b, int *x, int *N, double *p, 
 /*
  * Returns true if B is reached
  */
-random_walk_result walk(int a, int b, int x, double p) {
+random_walk_result walk(int a, int b, int x, double p, unsigned int *seed) {
 
   // Result will be here
   random_walk_result res = {A, 0};
 
   // Implementation of random walk
   while (x != a && x != b) {
-    double prob = (double) rand() / RAND_MAX;
+    double prob = (double) rand_r(seed) / RAND_MAX;
+    *seed += 1;
     if (prob <= p)
       x += 1;
     else
@@ -56,27 +57,30 @@ int main(int argc, char **argv) {
   int total_moves = 0;  // Total moves
 
   omp_set_num_threads(P);
-  clock_t begin = clock();
 
-  srand(time(NULL));
+  struct timeval t0, t1;
+  assert(gettimeofday(&t0, NULL) == 0);
+
+  unsigned int seed = time(NULL);
 
   #pragma omp parallel for reduction(+:total_moves,reached_b)
   for (size_t i = 0; i < N; i++) {
-    random_walk_result res = walk(a, b, x, p);
+    random_walk_result res = walk(a, b, x, p, &seed);
     reached_b += (res.dest == B) ? 1 : 0;
     total_moves += res.walk_count;
   }
 
-  clock_t end = clock();
+  assert(gettimeofday(&t1, NULL) == 0);
 
   // Gathering data
   double b_probability = ((double) reached_b) / N;
   double average_lifetime = (double) total_moves / N;
-  double execution_time = (double)(end - begin) / CLOCKS_PER_SEC;
+  double execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec) / 1000000.0;
 
   // Writing data
   FILE *file;
-  file = fopen("stats.txt", "a");
+  // file = fopen("stats.txt", "a");
+  file = fopen("P_graphs.txt", "a");
   if (file == NULL) {
     printf("Could not create 'stats.txt'.\n");
     exit(1);
