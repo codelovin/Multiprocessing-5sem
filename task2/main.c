@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#undef T1_TESTING
+#define T1_TESTING
 
 // Binary Search
 int bs(int x, int *arr, int low, int high) {
@@ -51,6 +51,7 @@ void merge_sequential(int *A, int *CP, int left1, int right1, int left2, int rig
 // Merging two subarrays in parallel
 void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
                     int rightA2, int leftCP, int m) {
+
     int n1 = rightA1 - leftA1 + 1;
     int n2 = rightA2 - leftA2 + 1;
     if (n1 < n2) {
@@ -62,8 +63,8 @@ void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
         return;
     }
     if (n1 <= m) {
-      merge_sequential(A, CP, leftA1, leftA2, rightA1, rightA2, leftCP);
-      return;
+        merge_sequential(A, CP, leftA1, rightA1, leftA2, rightA2, leftCP);
+        return;
     }
     int midA1 = (leftA1 + rightA1) / 2;
     int element = A[midA1];
@@ -71,23 +72,23 @@ void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
     int mid_insert = leftCP + (midA1 - leftA1) + (midA2 - leftA2);
     CP[mid_insert] = A[midA1];
 #ifndef T1_TESTING
-    #pragma omp parallel
+#pragma omp parallel
     {
-      #pragma omp single nowait
-      {
-        #pragma omp task
+#pragma omp single nowait
         {
-          merge_parallel(A, CP, leftA1, midA1 - 1, leftA2, midA2 - 1, leftCP, m);
+#pragma omp task
+            {
+                merge_parallel(A, CP, leftA1, midA1 - 1, leftA2, midA2 - 1, leftCP, m);
+            }
+#pragma omp task
+            {
+                merge_parallel(A, CP, midA1 + 1, rightA1, midA2, rightA2, mid_insert + 1, m);
+            }
         }
-        #pragma omp task
-        {
-          merge_parallel(A, CP, midA1 + 1, rightA1, midA2, rightA2, mid_insert + 1, m);
-        }
-      }
     }
 #else
-  merge_parallel(A, CP, leftA1, midA1 - 1, leftA2, midA2 - 1, leftCP, m);
-  merge_parallel(A, CP, midA1 + 1, rightA1, midA2, rightA2, mid_insert + 1, m);
+    merge_parallel(A, CP, leftA1, midA1 - 1, leftA2, midA2 - 1, leftCP, m);
+    merge_parallel(A, CP, midA1 + 1, rightA1, midA2, rightA2, mid_insert + 1, m);
 #endif
 }
 
@@ -103,19 +104,19 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
     int mid = (lA + hA) / 2;
     int t_mid = mid - lA + 1;
 #ifndef T1_TESTING
-    #pragma omp parallel
+#pragma omp parallel
     {
-      #pragma omp single nowait
-      {
-        #pragma omp task
+#pragma omp single nowait
         {
-          mergesort_parallel(A, T, lA, mid, 0, m);
+#pragma omp task
+            {
+                mergesort_parallel(A, T, lA, mid, 0, m);
+            }
+#pragma omp task
+            {
+                mergesort_parallel(A, T, mid + 1, hA, t_mid, m);
+            }
         }
-        #pragma omp task
-        {
-          mergesort_parallel(A, T, mid + 1, hA, t_mid, m);
-        }
-      }
     }
 #else
     mergesort_parallel(A, T, lA, mid, 0, m);
@@ -137,13 +138,13 @@ int main(int argc, char **argv) {
     file = fopen("stats.txt", "a");
     // file = fopen("qsort_stats.txt", "a");
     if (file == NULL) {
-      printf("Could not create 'stats.txt'.\n");
-      exit(1);
+        printf("Could not create 'stats.txt'.\n");
+        exit(1);
     }
     srand(time(NULL));
     int *A = (int*)calloc(n, sizeof(int));
     for(int i = 0;i<n;i++){
-        A[i]= rand();
+        A[i] = rand() % 100;
     }
     int*CP = (int*)calloc(n, sizeof(int));
     memcpy(CP, A, sizeof(int) * n);
@@ -153,6 +154,12 @@ int main(int argc, char **argv) {
     mergesort_parallel(A, CP, 0, n - 1, 0, m);
     // qsort(CP, n, sizeof(int), cmp);
     assert(gettimeofday(&t1, NULL) == 0);
+
+#ifdef DEBUG
+    for (int i = 0; i < n - 1; i++) {
+        assert(CP[i] <= CP[i + 1]);
+    }
+#endif
 
     double delta = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec) / 1000000.0;
 
