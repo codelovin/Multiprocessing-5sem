@@ -27,16 +27,14 @@ void argparse(int argc, char **argv, int *a, int *b, int *x, int *N, double *p, 
 /*
  * Returns true if B is reached
  */
-random_walk_result walk(int a, int b, int x, double p, unsigned int *seed) {
+random_walk_result walk(int a, int b, int x, double p, unsigned int seed) {
 
   // Result will be here
   random_walk_result res = {A, 0};
 
   // Implementation of random walk
   while (x != a && x != b) {
-    double prob = (double) rand_r(seed) / RAND_MAX;
-    *seed += 1;
-    if (prob <= p)
+    if ((double) rand_r(&seed) <= (double) RAND_MAX * p)
       x += 1;
     else
       x -= 1;
@@ -52,7 +50,6 @@ int main(int argc, char **argv) {
   int a, b, x, N, P;
   double p;
   argparse(argc, argv, &a, &b, &x, &N, &p, &P);
-
   int reached_b = 0;    // Number of particles that reached b
   int total_moves = 0;  // Total moves
 
@@ -61,11 +58,15 @@ int main(int argc, char **argv) {
   struct timeval t0, t1;
   assert(gettimeofday(&t0, NULL) == 0);
 
-  unsigned int seed = time(NULL);
+  srand(time(NULL));
+  unsigned int* seeds = (unsigned int*) malloc(sizeof(int) * N);
+  for (int i = 0; i < N; i++) {
+    seeds[i] = rand();
+  }
 
   #pragma omp parallel for reduction(+:total_moves,reached_b)
   for (size_t i = 0; i < N; i++) {
-    random_walk_result res = walk(a, b, x, p, &seed);
+    random_walk_result res = walk(a, b, x, p, seeds[i]);
     reached_b += (res.dest == B) ? 1 : 0;
     total_moves += res.walk_count;
   }
@@ -80,13 +81,13 @@ int main(int argc, char **argv) {
   // Writing data
   FILE *file;
   // file = fopen("stats.txt", "a");
-  file = fopen("P_graphs.txt", "a");
+  file = fopen("stats.txt", "a");
   if (file == NULL) {
     printf("Could not create 'stats.txt'.\n");
     exit(1);
   }
   fprintf(file, "%f %f %fs %d %d %d %d %f %d\n", b_probability, average_lifetime, execution_time, a, b, x, N, p, P);
   fclose(file);
-
+  free(seeds);
   return 0;
 }
