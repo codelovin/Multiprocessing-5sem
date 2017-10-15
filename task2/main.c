@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define T1_TESTING
+#undef T1_TESTING
+#undef DEBUG
 
 // Binary Search
 int bs(int x, int *arr, int low, int high) {
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
     srand(time(NULL));
     int *A = (int*)calloc(n, sizeof(int));
     for(int i = 0;i<n;i++){
-        A[i] = rand() % 100;
+        A[i] = rand();
     }
     int*CP = (int*)calloc(n, sizeof(int));
     memcpy(CP, A, sizeof(int) * n);
@@ -165,6 +166,21 @@ int main(int argc, char **argv) {
 
     fprintf(file, "%fs %d %d %d\n", delta, n, m, P);
     fclose(file);
+
+    file = fopen("data.txt", "w");
+    if (file == NULL) {
+        printf("Could not create 'data.txt'.\n");
+        exit(1);
+    }
+    for (int i = 0; i < n; i++) {
+      fprintf(file, "%d ", A[i]);
+    }
+    fprintf(file, "\n");
+    for (int i = 0; i < n; i++) {
+      fprintf(file, "%d ", CP[i]);
+    }
+    fclose(file);
+
     free(A);
     free(CP);
     return 0;
