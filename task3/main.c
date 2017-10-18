@@ -170,7 +170,7 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
     if (count > 0){
         count--;
         pthread_mutex_unlock(&mutex);
-        created[0]++;
+        created[0] = 1;
         pthread_create(threads, NULL, mergesort_parallel_helper, get_args_t(A, T, lA, mid, 0, 0, 0, m));
     } else {
         pthread_mutex_unlock(&mutex);
@@ -181,7 +181,7 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
     if (count > 0){
         count--;
         pthread_mutex_unlock(&mutex);
-        created[1]++;
+        created[1] = 1;
         pthread_create(threads + 1, NULL, mergesort_parallel_helper, get_args_t(A, T, mid + 1, hA, 0, 0, t_mid, m));
     } else {
         pthread_mutex_unlock(&mutex);
