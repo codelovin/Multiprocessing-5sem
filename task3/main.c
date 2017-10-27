@@ -146,6 +146,7 @@ void merge_parallel(int *A, int *CP, int leftA1, int rightA1, int leftA2,
 void* merge_parallel_helper(void *args_) {
     args_t *args = (args_t *) args_;
     merge_parallel(args->A, args->B, args->x1, args->x2, args->x3, args->x4, args->x5, args->m);
+    free(args);
     return NULL;
 }
 
@@ -204,6 +205,7 @@ void mergesort_parallel(int *A, int *CP, int lA, int hA, int lCP, int m) {
 void* mergesort_parallel_helper(void *args_) {
     args_t *args = (args_t *) args_;
     mergesort_parallel(args->A, args->B, args->x1, args->x2, args->x5, args->m);
+    free(args);
     return NULL;
 }
 
@@ -214,8 +216,8 @@ int main(int argc, char **argv) {
    int P = atoi(argv[3]);
     count = P - 1;
     FILE *file;
-    // file = fopen("stats.txt", "a");
-    file = fopen("qsort_stats.txt", "a");
+    file = fopen("stats.txt", "a");
+    // file = fopen("qsort_stats.txt", "a");
     if (file == NULL) {
         printf("Could not create 'stats.txt'.\n");
         exit(1);
