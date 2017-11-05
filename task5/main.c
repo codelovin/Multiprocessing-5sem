@@ -56,11 +56,11 @@ typedef struct {
 } particle_t;
 
 coords_t get_coordinates(int rank, int a, int b) {
-    return (coords_t) { rank % a, rank / b};
+    return (coords_t) { rank % a, rank / a};
 }
 
 int get_rank(coords_t coords, int a, int b) {
-    return coords.y * b + coords.x;
+    return coords.y * a + coords.x;
 }
 
 int get_adjacent_rank(coords_t coords, int a, int b, dir_t dir) {
