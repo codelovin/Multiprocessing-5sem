@@ -351,7 +351,7 @@ void* process_region(void* ctx_void) {
                 int bytes_per_first_line_elem = bytes_before_y_c + a_global * l * size * sizeof(int);
                 int bytes_before_x_c = bytes_per_first_line_elem + x_c * size * sizeof(int);
                 MPI_File_set_view(f, bytes_before_x_c, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
-                MPI_File_write(f, &result[y_c][x_c], size, MPI_INT, MPI_STATUS_IGNORE);
+                MPI_File_write(f, &result[y_c][x_c*size], size, MPI_INT, MPI_STATUS_IGNORE);
             }
         }
 
